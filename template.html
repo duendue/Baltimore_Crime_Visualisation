@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SKRIV TITEL HER</title>
+    <script type="application/javascript" src="https://digitalliteracy.cc.au.dk/crime-api/client-api.js"></script>
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+
+    <style>
+        table, th, td{
+            border: 1px solid black;
+            border-collapse: unset;
+        }
+
+        .searchbar {
+            width:90%;
+        }
+    </style>
+</head>
+<body>
+
+<div class="searchbar">
+    <input type="text" placeholder="Crime Description" id="input" style="width:40%;">
+
+    <select id="Dropdown" class="dropdown-content" style="width:40%;">
+        <option value="date-time-asc">Date Time Ascending</option>
+        <option value="date-time-desc">Date Time Descending</option>
+        <option value="neighborhood-asc">Neighborhood Ascending</option>
+        <option value="neighborhood-desc">Neighborhood Descending</option>
+    </select>
+
+    <button type="submit" id="button" > Search </button>
+</div>
+
+
+<div id="chart"></div>
+
+<script type="application/javascript">
+
+    let button = document.getElementById("button");
+    let searchinput;
+
+
+    button.addEventListener("click", function(){
+        searchinput = document.getElementById("input");
+
+
+        api.search((result) => {
+            console.log('SØGNING');
+            console.log(result);
+
+            for(let i = 0; i < result.data.length; i++){
+                switch(result.data[i].premise){
+                    case "PARKING LO":
+                        result.data[i].premise = "PARKING LOT";
+                        break;
+                    case "CONVENIENC":
+                        result.data[i].premise = "CONVENIENCE STORE";
+                        break;
+                    case "OTHER/RESI":
+                        result.data[i].premise = "OTHER / RESIDENCE";
+                        break;
+                    case "ROW/TOWNHO":
+                        result.data[i].premise = "ROWHOUSE / TOWNHOUSE";
+                        break;
+                    case "OTHER - IN":
+                        result.data[i].premise = "OTHER - INSIDE";
+                        break;
+                    case "VACANT BUI":
+                        result.data[i].premise = "VACANT BUILDING";
+                        break;
+                    case "GROCERY/CO":
+                        result.data[i].premise = "GROCERY / CONVENIENCE STORE";
+                        break;
+                    case "HOSP/NURS.":
+                        result.data[i].premise = "HOSPITAL / NURSING HOME";
+                        break;
+                    case "SHED/GARAG":
+                        result.data[i].premise = "SHED / GARAGE";
+                        break;
+                    case "APT/CONDO":
+                        result.data[i].premise = "APARTMENT / CONDO";
+                        break;
+                    case "OTHER - OU":
+                        result.data[i].premise = "OTHER - OUTSIDE";
+                        break;
+                    case "CONSTRUCTI":
+                        result.data[i].premise = "CONSTRUCTION LOT";
+                        break;
+                }
+            }
+
+            let dataStore = [];
+
+            let table = document.createElement("table");
+
+            console.log(result.data.length);
+
+            for(let i = -1; i < result.data.length; i++){
+                if(i === -1) {
+                    dataStore[0] = "Date";
+                    dataStore[1] = "District";
+                    dataStore[2] = "Neighborhood";
+                    dataStore[3] = "Premise";
+                    dataStore[4] = "Description";
+                }else {
+                    dataStore[0] = result.data[i].date;
+                    dataStore[1] = result.data[i].district;
+                    dataStore[2] = result.data[i].neighborhood;
+                    dataStore[3] = result.data[i].premise;
+                    dataStore[4] = result.data[i].description;
+                }
+
+                let tr = document.createElement("tr");
+                let rowStore = [];
+                let textStore = [];
+                for(let j = 0; j < 5; j++){
+                    rowStore[j] = document.createElement("td");
+                    textStore[j] = document.createTextNode(dataStore[j]);
+                    rowStore[j].appendChild(textStore[j]);
+                    tr.appendChild(rowStore[j])
+                }
+                table.appendChild(tr);
+            }
+            document.body.appendChild(table);
+        }, searchinput.value);
+
+        api.groupBy((result) => {
+            console.log('GRUPPERING AF DATA');
+            console.log(result);
+
+            let resultArray = [];
+
+            result.data.forEach(function(val, key){
+
+                resultArray.push({title: key, count: val});
+
+            });
+            console.log(resultArray)
+
+
+            for(let i = 0; i < resultArray.length; i++){
+                if(resultArray[i].title === ""){
+                    resultArray[i].title = "NO DESCRIPTION";
+                }
+            }
+
+            function dynamicSort(property) {
+                var sortOrder = 1;
+                if(property[0] === "-") {
+                    sortOrder = -1;
+                    property = property.substr(1);
+                }
+                return function (a,b) {
+                    var result = (a[property] < b[property]) ? -1 : (a[property] > b[property]) ? 1 : 0;
+                    return result * sortOrder;
+                }
+            }
+
+            resultArray.sort(dynamicSort("-count"));
+
+            //resultArray.sort();
+            api.drawChart(resultArray, "chart", "Stats");
+
+
+        }, searchinput.value, 'neighborhood');
+
+        console.log(searchinput.value);
+
+    });
+
+
+
+
+
+
+
+
+
+
+
+console.log();
+
+</script>
+
+</body>
+</html>
